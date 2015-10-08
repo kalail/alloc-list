@@ -2,3 +2,6 @@
 name = "assoc_list"
 version = "0.1.0"
 authors = ["kalail <kashif610@gmail.com>"]
+description = "An implementation of an Association List"
+license = "MIT"
+repository = "https://github.com/kalail/assoc-list"
