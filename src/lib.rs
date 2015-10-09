@@ -3,17 +3,17 @@ use std::ops::Index;
 
 
 struct AssocList<K, V> {
-    storage: LinkedList<(K, Option<V>)>
+    storage: Vec<(K, Option<V>)>
 }
 
 
 impl<K: Eq + Clone, V> AssocList<K, V> {
     fn new() -> AssocList<K, V> {
-        AssocList{storage: LinkedList::new()}
+        AssocList{storage: Vec::new()}
     }
 
     fn insert(&mut self, k: K, v: V) {
-        self.storage.push_front((k, Some(v)));
+        self.storage.push((k, Some(v)));
     }
 
     fn len(&self) -> usize {
@@ -21,7 +21,7 @@ impl<K: Eq + Clone, V> AssocList<K, V> {
     }
 
     fn get(&self, k: &K) -> Option<&V> {
-        for &(ref key, ref value_option) in &self.storage {
+        for &(ref key, ref value_option) in self.storage.iter().rev() {
 
             if let Some(ref value) = *value_option {
                 if *key == *k {
@@ -41,7 +41,7 @@ impl<K: Eq + Clone, V> AssocList<K, V> {
     }
 
     fn remove(&mut self, k: &K) {
-        self.storage.push_front(((*k).clone(), None));
+        self.storage.push(((*k).clone(), None));
     }
 
 }
@@ -102,7 +102,6 @@ fn remove_works() {
     let mut map = AssocList::new();
     map.insert("name", "John Smith");
     assert!(map.remove(&"name") == ());
-    println!("{:?}", map.get(&"name"));
     assert!(map.get(&"name") == None);
 }
 
