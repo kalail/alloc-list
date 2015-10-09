@@ -3,7 +3,7 @@ use std::ops::Index;
 
 
 struct AssocList<K, V> {
-    storage: Vec<(K, Option<V>)>
+    storage: Vec<(K, V)>
 }
 
 
@@ -12,8 +12,26 @@ impl<K: Eq + Clone, V> AssocList<K, V> {
         AssocList{storage: Vec::new()}
     }
 
-    fn insert(&mut self, k: K, v: V) {
-        self.storage.push((k, Some(v)));
+    fn with_capacity(capacity: usize) -> AssocList<K, V> {
+        AssocList{storage: Vec::with_capacity(capacity)}
+    }
+
+    fn get_index(&self, k: &K) -> Option<usize> {
+        for (index, &(ref key, ref value)) in self.storage.iter().enumerate() {
+            if *key == *k {
+                return Some(index);
+            }
+        }
+        None
+    }
+
+    fn insert(&mut self, k: K, v: V) -> Option<V> {
+        let ret_val = match self.get_index(&k) {
+            Some(index) => Some(self.storage.swap_remove(index).1),
+            None => None,
+        };
+        self.storage.push((k, v));
+        ret_val
     }
 
     fn len(&self) -> usize {
@@ -21,27 +39,24 @@ impl<K: Eq + Clone, V> AssocList<K, V> {
     }
 
     fn get(&self, k: &K) -> Option<&V> {
-        for &(ref key, ref value_option) in self.storage.iter().rev() {
-
-            if let Some(ref value) = *value_option {
-                if *key == *k {
-                    return Some(value);
-                }
-            }
-            return None
+        match self.get_index(k) {
+            Some(index) => Some(&self.storage[index].1),
+            None => None,
         }
-        None
     }
 
     fn contains_key(&self, k: &K) -> bool {
-        match self.get(k) {
+        match self.get_index(k) {
             Some(_) => true,
             None => false,
         }
     }
 
-    fn remove(&mut self, k: &K) {
-        self.storage.push(((*k).clone(), None));
+    fn remove(&mut self, k: &K) -> Option<V> {
+        match self.get_index(k) {
+            Some(index) => Some(self.storage.remove(index).1),
+            None => None
+        }
     }
 
 }
@@ -63,7 +78,8 @@ fn it_works() {
 #[test]
 fn insert_works() {
     let mut map = AssocList::new();
-    assert!(map.insert("name", "John Smith") == ());
+    assert!(map.insert("name", "John Smith") == None);
+    assert!(map.insert("name", "Jane Dawson") == Some("John Smith"));
 }
 
 #[test]
@@ -80,6 +96,10 @@ fn len_works() {
     assert!(map.len() == 0);
     map.insert("name", "John Smith");
     assert!(map.len() == 1);
+    map.insert("not name", "This is not a name");
+    assert!(map.len() == 2);
+    map.insert("name", "Jane Dawson");
+    assert!(map.len() == 2);
 }
 
 #[test]
@@ -101,7 +121,7 @@ fn index_works() {
 fn remove_works() {
     let mut map = AssocList::new();
     map.insert("name", "John Smith");
-    assert!(map.remove(&"name") == ());
+    assert!(map.remove(&"name") == Some("John Smith"));
     assert!(map.get(&"name") == None);
+    assert!(map.remove(&"name") == None);
 }
-
